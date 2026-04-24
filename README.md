@@ -22,52 +22,64 @@ docker compose up --build
 
 This starts three services:
 
-| Service    | URL                        |
-|------------|----------------------------|
-| Frontend   | http://localhost:5173       |
-| Backend API| http://localhost:3000       |
-| PostgreSQL | localhost:5432              |
+| Service     | URL                   |
+| ----------- | --------------------- |
+| Frontend    | http://localhost:5173 |
+| Backend API | http://localhost:3000 |
+| PostgreSQL  | localhost:5432        |
 
-Database migrations run automatically on backend startup via `prisma migrate deploy`.  
-No manual database setup is required.
-
-### Optional: Load Seed Data
-
-A sample SQL file with demo devices and readings is available for manual use:
+**Bash**
 
 ```bash
-psql postgresql://test:test123456@localhost:5432/nxgen_task -f nxgen-task-backend/prisma/seed.sql
+docker compose down -v && docker compose up --build
 ```
 
-Run this after `docker compose up` if you want pre-populated data.
+### Seed Data
 
----
+## Seed Data (auto on backend startup)
 
-### Local Development (without Docker)
+Startup sequence:
 
-**Backend** — from `nxgen-task-backend/`:
+1. `prisma generate`
+2. `prisma migrate deploy`
+3. `prisma db seed`
+4. start API
+
+Seed includes:
+
+- 2 demo devices
+- readings from Jan-Apr 2026
+- 6-hour intervals
+- deterministic IDs + upsert-style updates (safe to rerun)
+
+Note: newly created devices start empty until you add readings.
+
+## Local Dev
+
+Backend (`nxgen-task-backend`):
 
 ```bash
 npm install
 npx prisma generate
 npx prisma migrate deploy
+npx prisma db seed
 npm run dev
 ```
 
-Requires `DATABASE_URL`:
+Required env:
 
 ```env
 DATABASE_URL=postgresql://test:test123456@localhost:5432/nxgen_task
 ```
 
-**Frontend** — from `nxgen-task-frontend/`:
+Frontend (`nxgen-task-frontend`):
 
 ```bash
 npm install
 npm run dev
 ```
 
-Requires `VITE_API_BASE_URL`:
+Required env:
 
 ```env
 VITE_API_BASE_URL=http://localhost:3000
@@ -77,10 +89,10 @@ VITE_API_BASE_URL=http://localhost:3000
 
 Managed by Prisma. Migrations are in `nxgen-task-backend/prisma/migrations/`.
 
-| Table         | Columns                                          |
-|---------------|--------------------------------------------------|
-| `devices`     | id, name, created_at                             |
-| `device_data` | id, device_id, metric, unit, value, timestamp    |
+| Table         | Columns                                       |
+| ------------- | --------------------------------------------- |
+| `devices`     | id, name, created_at                          |
+| `device_data` | id, device_id, metric, unit, value, timestamp |
 
 ---
 
@@ -91,20 +103,16 @@ Managed by Prisma. Migrations are in `nxgen-task-backend/prisma/migrations/`.
 #### Create a device
 
 ```bash
-curl -X POST http://localhost:3000/devices \
-  -H "Content-Type: application/json" \
-  -d '{"name":"sensor-a"}'
+curl -X POST http://localhost:3000/devices -H "Content-Type: application/json" -d "{\"name\":\"sensor-a\"}"
 ```
 
-#### List all devices
+List devices:
 
 ```bash
 curl http://localhost:3000/devices
 ```
 
-#### Add a reading to a device
-
-Replace `<deviceId>` with an id from the list above:
+Add reading:
 
 ```bash
 curl -X POST http://localhost:3000/devices/<deviceId>/data \
@@ -112,7 +120,7 @@ curl -X POST http://localhost:3000/devices/<deviceId>/data \
   -d '{"metric":"temperature","unit":"C","value":25.1,"timestamp":"2026-01-10T10:00:00.000Z"}'
 ```
 
-#### Query readings over a time range
+Query readings:
 
 ```bash
 curl "http://localhost:3000/devices/<deviceId>/data?from=2026-01-10T09:00:00.000Z&to=2026-01-10T12:00:00.000Z"
@@ -129,6 +137,8 @@ curl "http://localhost:3000/devices/<deviceId>/data?from=2026-01-10T09:00:00.000
 
 ### Running Tests
 
+
+
 ```bash
 cd nxgen-task-backend
 npm test
@@ -142,7 +152,8 @@ Tests use Jest and Supertest and cover input validation, error handling, and ful
 
 ### Methodology
 
-I kept the architecture simple and layered — a clear REST API, a typed database layer, and a focused dashboard UI. The goal was a codebase that is easy to follow end-to-end, not one that demonstrates every possible pattern.
+I built this dashboard to make complex IoT data feel simple and easy to use. To keep the app fast when a device has a lot of data, I used smart filtering so the charts only load what’s necessary, keeping the interface smooth and responsive.
+I ensured the system is reliable, easy to test, and can be started with just one command in any environment
 
 ### Design Decisions
 
