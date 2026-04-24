@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test123456
+      POSTGRES_DB: nxgen_task
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d nxgen_task"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./nxgen-task-backend
+    environment:
+      DATABASE_URL: postgresql://test:test123456@db:5432/nxgen_task
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./nxgen-task-frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:3000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  db-data:

@@ -1,0 +1,30 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Device {
+  id         String   @id @default(uuid())
+  name       String
+  created_at DateTime @default(now())
+  data       Data[]
+}
+
+model Data {
+  id        String   @id @default(uuid())
+  device_id String
+  metric    String
+  unit      String
+  value     Float
+  timestamp DateTime @default(now())
+
+  device Device @relation(fields: [device_id], references: [id])
+}
