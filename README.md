@@ -3,6 +3,10 @@
 A full-stack IoT dashboard for registering devices and exploring time-series sensor data.  
 Built with React, Node.js, PostgreSQL, and Docker.
 
+## Live Deployment
+
+This project is deployed on Railway: [IoT Pulse — Device Dashboard](https://amusing-connection-production-d146.up.railway.app/)
+
 ---
 
 ## 1. Setup
