@@ -38,7 +38,6 @@ This starts three services:
 docker compose down -v && docker compose up --build
 ```
 
-### Seed Data
 
 ## Seed Data (auto on backend startup)
 
